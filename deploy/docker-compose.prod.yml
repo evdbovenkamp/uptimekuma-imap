@@ -1,0 +1,17 @@
+# Reference production compose file for a fresh install of Uptime Kuma + the IMAP monitor
+# patch. For an EXISTING installation, custom/imap-monitor/update-and-reapply.sh edits your
+# current docker-compose.yml's `image:` line in place instead of replacing the whole file,
+# so your existing volume name and any other customization are preserved untouched.
+services:
+  uptime-kuma:
+    image: ${IMAP_IMAGE_TAG:?set IMAP_IMAGE_TAG to the image built by custom/imap-monitor/install.sh}
+    container_name: uptime-kuma
+    restart: always
+    ports:
+      - "3001:3001"
+    volumes:
+      - uptime-kuma:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  uptime-kuma:

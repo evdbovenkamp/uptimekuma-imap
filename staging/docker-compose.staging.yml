@@ -1,0 +1,24 @@
+# Staging rehearsal environment for the IMAP monitor patch.
+#
+# Deliberately isolated from the real deployment:
+#  - bound to 127.0.0.1 only (reach it via an SSH tunnel), never exposed through a reverse
+#    proxy vhost
+#  - its own data volume (a snapshot of production, created and neutralized separately -
+#    see custom/imap-monitor/README.md - never the live production volume)
+#  - no /var/run/docker.sock mount: staging has no business touching the host Docker daemon
+#
+# Usage:
+#   IMAP_IMAGE_TAG=uptime-kuma-imap:2.4.0-imap1.0.0 docker compose -f staging/docker-compose.staging.yml up -d
+services:
+  uptime-kuma-imap-staging:
+    image: ${IMAP_IMAGE_TAG:?set IMAP_IMAGE_TAG to the image built by custom/imap-monitor/install.sh}
+    container_name: uptime-kuma-imap-staging
+    restart: "no"
+    ports:
+      - "127.0.0.1:3002:3001"
+    volumes:
+      - uptime-kuma-staging-data:/app/data
+
+volumes:
+  uptime-kuma-staging-data:
+    external: true

@@ -1,0 +1,9 @@
+# IMAP monitor patch compatibility record.
+# install.sh / update-and-reapply.sh read tested_against_upstream and compare it to the
+# upstream tag they are about to build against; on a mismatch they print a WARNING and
+# continue (per spec: warn, never block). update-and-reapply.sh updates this file after a
+# staging rehearsal against a new upstream tag passes.
+patch_version=1.0.0
+tested_against_upstream=2.4.0
+last_verified_date=2026-10-11
+notes=Built, verified (staging + 7 functional scenarios against a real IMAP server + uninstall/rollback rehearsal), and promoted to production against Uptime Kuma 2.4.0 on 2026-10-11. STARTTLS mode verified by code review only (no live STARTTLS test target available); patch does not yet apply cleanly to upstream 2.5.6 (conflicts in server/model/monitor.js, server/uptime-kuma-server.js, src/pages/EditMonitor.vue) - rework needed before the next update-and-reapply.sh run.

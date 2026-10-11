@@ -1,0 +1,131 @@
+diff --git a/server/model/monitor.js b/server/model/monitor.js
+index 4df6d0e..a56c1c8 100644
+--- a/server/model/monitor.js
++++ b/server/model/monitor.js
+@@ -199,6 +199,9 @@ class Monitor extends BeanModel {
+             jsonPathOperator: this.jsonPathOperator,
+             snmpVersion: this.snmpVersion,
+             smtpSecurity: this.smtpSecurity,
++            imapSecurity: this.imapSecurity,
++            imapMailbox: this.imapMailbox,
++            imapCheckType: this.imapCheckType,
+             rabbitmqNodes: JSON.parse(this.rabbitmqNodes),
+             conditions: JSON.parse(this.conditions),
+             ipFamily: this.ipFamily,
+@@ -248,6 +251,8 @@ class Monitor extends BeanModel {
+                 kafkaProducerSaslOptions: JSON.parse(this.kafkaProducerSaslOptions),
+                 rabbitmqUsername: this.rabbitmqUsername,
+                 rabbitmqPassword: this.rabbitmqPassword,
++                imapUsername: this.imapUsername,
++                imapPassword: this.imapPassword,
+             };
+         }
+ 
+diff --git a/server/server.js b/server/server.js
+index 141f564..3fe5ea7 100644
+--- a/server/server.js
++++ b/server/server.js
+@@ -929,6 +929,11 @@ let needSetup = false;
+                 bean.rabbitmqNodes = JSON.stringify(monitor.rabbitmqNodes);
+                 bean.rabbitmqUsername = monitor.rabbitmqUsername;
+                 bean.rabbitmqPassword = monitor.rabbitmqPassword;
++                bean.imapUsername = monitor.imapUsername;
++                bean.imapPassword = monitor.imapPassword;
++                bean.imapSecurity = monitor.imapSecurity;
++                bean.imapMailbox = monitor.imapMailbox;
++                bean.imapCheckType = monitor.imapCheckType;
+                 bean.conditions = JSON.stringify(monitor.conditions);
+                 bean.manual_status = monitor.manual_status;
+                 bean.system_service_name = monitor.system_service_name;
+diff --git a/server/uptime-kuma-server.js b/server/uptime-kuma-server.js
+index a1ee804..6e2eda4 100644
+--- a/server/uptime-kuma-server.js
++++ b/server/uptime-kuma-server.js
+@@ -132,6 +132,7 @@ class UptimeKumaServer {
+         UptimeKumaServer.monitorTypeList["sqlserver"] = new MssqlMonitorType();
+         UptimeKumaServer.monitorTypeList["mysql"] = new MysqlMonitorType();
+         UptimeKumaServer.monitorTypeList["oracledb"] = new OracleDbMonitorType();
++        UptimeKumaServer.monitorTypeList["imap"] = new ImapMonitorType();
+ 
+         // Allow all CORS origins (polling) in development
+         let cors = undefined;
+@@ -584,4 +585,5 @@ const { SystemServiceMonitorType } = require("./monitor-types/system-service");
+ const { MssqlMonitorType } = require("./monitor-types/mssql");
+ const { MysqlMonitorType } = require("./monitor-types/mysql");
+ const { OracleDbMonitorType } = require("./monitor-types/oracledb");
++const { ImapMonitorType } = require("./monitor-types/imap");
+ const Monitor = require("./model/monitor");
+diff --git a/src/pages/EditMonitor.vue b/src/pages/EditMonitor.vue
+index 48117c8..59835b2 100644
+--- a/src/pages/EditMonitor.vue
++++ b/src/pages/EditMonitor.vue
+@@ -78,6 +78,7 @@
+                                             {{ $t("Globalping - Access global monitoring probes") }}
+                                         </option>
+                                         <option value="grpc-keyword">gRPC(s) - {{ $t("Keyword") }}</option>
++                                        <option value="imap">IMAP</option>
+                                         <option value="json-query">HTTP(s) - {{ $t("Json Query") }}</option>
+                                         <option value="kafka-producer">Kafka Producer</option>
+                                         <option value="mqtt">MQTT</option>
+@@ -480,6 +481,7 @@
+                                     monitor.type === 'dns' ||
+                                     monitor.type === 'steam' ||
+                                     monitor.type === 'gamedig' ||
++                                    monitor.type === 'imap' ||
+                                     monitor.type === 'mqtt' ||
+                                     monitor.type === 'radius' ||
+                                     monitor.type === 'tailscale-ping' ||
+@@ -692,6 +694,7 @@
+                                     monitor.type === 'port' ||
+                                     monitor.type === 'steam' ||
+                                     monitor.type === 'gamedig' ||
++                                    monitor.type === 'imap' ||
+                                     monitor.type === 'mqtt' ||
+                                     monitor.type === 'radius' ||
+                                     monitor.type === 'smtp' ||
+@@ -1130,6 +1133,9 @@
+                                 </div>
+                             </template>
+ 
++                            <!-- IMAP -->
++                            <ImapMonitorFields v-if="monitor.type === 'imap'" :monitor="monitor" />
++
+                             <template v-if="monitor.type === 'radius'">
+                                 <div class="my-3">
+                                     <label for="radius_username" class="form-label">Radius {{ $t("Username") }}</label>
+@@ -1648,6 +1654,7 @@
+                                     monitor.type === 'keyword' ||
+                                     monitor.type === 'json-query' ||
+                                     monitor.type === 'redis' ||
++                                    monitor.type === 'imap' ||
+                                     (monitor.type === 'globalping' && monitor.subtype === 'http')
+                                 "
+                                 class="my-3 form-check"
+@@ -3114,6 +3121,7 @@ import isFQDN from "validator/lib/isFQDN";
+ import isIP from "validator/lib/isIP";
+ import HiddenInput from "../components/HiddenInput.vue";
+ import EditMonitorConditions from "../components/EditMonitorConditions.vue";
++import ImapMonitorFields from "../components/ImapMonitorFields.vue";
+ 
+ const toast = useToast();
+ 
+@@ -3187,6 +3195,11 @@ const monitorDefaults = {
+     rabbitmqNodes: [],
+     rabbitmqUsername: "",
+     rabbitmqPassword: "",
++    imapUsername: "",
++    imapPassword: "",
++    imapSecurity: "secure",
++    imapMailbox: "INBOX",
++    imapCheckType: "authenticate_select",
+     conditions: [],
+     system_service_name: "",
+ };
+@@ -3205,6 +3218,7 @@ export default {
+         TagsManager,
+         VueMultiselect,
+         EditMonitorConditions,
++        ImapMonitorFields,
+     },
+ 
+     data() {

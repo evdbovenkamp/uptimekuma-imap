@@ -1,0 +1,9 @@
+{
+    "imapSecurityHelpText": "'IMAPS' connects using implicit TLS (port 993); 'STARTTLS' connects in plaintext and upgrades the connection, failing if the server does not offer it (port 143); 'None' never upgrades, even if the server offers STARTTLS - only use this against a trusted internal or test server.",
+    "imapMailboxLabel": "Mailbox",
+    "imapMailboxTip": "The mailbox to open, e.g. INBOX. Only used by the 'Authenticate + Select Mailbox' check type.",
+    "imapCheckTypeConnect": "Connect only",
+    "imapCheckTypeAuthenticate": "Authenticate",
+    "imapCheckTypeAuthenticateSelect": "Authenticate + Select Mailbox",
+    "imapCheckTypeHelpText": "'Connect only' just reads the server's IMAP greeting. 'Authenticate' also logs in with the given credentials. 'Authenticate + Select Mailbox' additionally opens the configured mailbox - this is the most complete check and the default."
+}
