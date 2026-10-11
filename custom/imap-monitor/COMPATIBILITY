@@ -4,6 +4,6 @@
 # continue (per spec: warn, never block). update-and-reapply.sh updates this file after a
 # staging rehearsal against a new upstream tag passes.
 patch_version=1.0.0
-tested_against_upstream=2.4.0
+tested_against_upstream=2.5.6
 last_verified_date=2026-10-11
-notes=Built, verified (staging + 7 functional scenarios against a real IMAP server + uninstall/rollback rehearsal), and promoted to production against Uptime Kuma 2.4.0 on 2026-10-11. STARTTLS mode verified by code review only (no live STARTTLS test target available); patch does not yet apply cleanly to upstream 2.5.6 (conflicts in server/model/monitor.js, server/uptime-kuma-server.js, src/pages/EditMonitor.vue) - rework needed before the next update-and-reapply.sh run.
+notes=Built, verified, staged and promoted to production against Uptime Kuma 2.4.0 on 2026-10-11, then updated to 2.5.6 the same day via update-and-reapply.sh (build/stage/test/uninstall-rehearsal repeated against a fresh production snapshot, then promoted) - the full update-resistance workflow this patch layer exists for, proven end to end against a real production instance. The patch needed rework for 2.5.6: upstream inserted new monitor types (steam registry entry, pm2, sftp, ntp) adjacent to every one of this patch's insertion points, breaking git apply's context matching without changing the semantics - resolved by re-deriving the same edits against a fresh 2.5.6 clone. STARTTLS mode is still verified by code review and against a local greenmail test server only (no live STARTTLS-capable server available at mailbox.souver.nl).
