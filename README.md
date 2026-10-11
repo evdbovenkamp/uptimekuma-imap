@@ -45,9 +45,12 @@ Built on [`imapflow`](https://www.npmjs.com/package/imapflow), an actively maint
 └── deploy/docker-compose.prod.yml  # reference compose for a fresh install
 ```
 
-## Installation (existing Uptime Kuma instance)
+## Requirements
 
-Requirements on the host: `git`, `docker`. No Node.js installation needed — all `npm`/`vite` steps run inside throwaway containers.
+- **Your Uptime Kuma instance must already be running via Docker / Docker Compose.** This patch layer builds and ships a custom Docker image, and `install.sh`/`verify.sh`/`uninstall.sh`/`update-and-reapply.sh` all operate through `docker`/`docker compose` commands. A native install (plain Node.js, `pm2`, systemd, no container) is **not supported** by these scripts — the patch's own edits (`patches/imap-monitor.patch` + `custom/imap-monitor/files/`) could in principle be applied to a bare checkout by hand, but nothing here builds, tests, or rolls that back for you.
+- `git` and `docker` on the host. No Node.js installation needed — all `npm`/`vite` steps run inside throwaway containers.
+
+## Installation (existing Uptime Kuma instance)
 
 ```bash
 git clone https://github.com/evdbovenkamp/uptimekuma-imap.git
@@ -142,6 +145,7 @@ Without `--compose-file`/`--apply-compose`, the script only performs the databas
 
 ## Known limitations
 
+- **Docker-only.** See [Requirements](#requirements) — there is no supported path for a native (non-Docker) Uptime Kuma install.
 - Credentials are stored in plaintext in the database, exactly like every other credential-bearing monitor type in Uptime Kuma (MQTT, RabbitMQ, Radius, basic auth, OAuth, ...). This patch does not introduce a new storage mechanism, for better or worse.
 - The `STARTTLS` security mode is verified by code review and against a local [`greenmail`](https://hub.docker.com/r/greenmail/standalone) test server, not against a live STARTTLS-capable production IMAP server (none was available when this was built). If your server relies on `STARTTLS` specifically, test it directly before depending on it.
 - Each upstream Uptime Kuma release may require re-deriving the four patched hunks if it happens to touch the exact same lines (see [Upgrading](#upgrading-uptime-kuma)). This is inherent to patching rather than forking, and is why `install.sh` stops rather than guessing.
